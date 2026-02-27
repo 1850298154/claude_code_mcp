@@ -2,7 +2,7 @@
 # 文件: src/mcp/tools/utils_tools.py
 # 描述: Utils MCP 工具定义
 #
-# 上游依赖: utils/file_ops/, utils/string_ops/
+# 上游依赖: utils/file_ops/, utils/string_ops/, utils/json_ops/
 # 下游封装: mcp/server.py
 #
 # Bash 快速定位:
@@ -128,6 +128,38 @@ UTILS_TOOLS: list[Tool] = [
                 },
             },
             "required": ["text", "style"],
+        },
+    ),
+    Tool(
+        name="json_read",
+        description="读取 JSON 文件",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": "JSON 文件路径",
+                },
+            },
+            "required": ["file_path"],
+        },
+    ),
+    Tool(
+        name="json_write",
+        description="写入 JSON 文件",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": "JSON 文件路径",
+                },
+                "data": {
+                    "type": "string",
+                    "description": "JSON 数据字符串",
+                },
+            },
+            "required": ["file_path", "data"],
         },
     ),
 ]

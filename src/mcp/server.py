@@ -206,6 +206,18 @@ class MCPServer:
             style = args.get("style", "")
             from utils.string_ops import StringOps
             return {"formatted": StringOps.format(text, style)}
+        elif tool_name == "json_read":
+            file_path = args.get("file_path", "")
+            from utils.json_ops import JsonOps
+            return {"data": JsonOps.read(file_path)}
+        elif tool_name == "json_write":
+            file_path = args.get("file_path", "")
+            data = args.get("data", "")
+            from utils.json_ops import JsonOps
+            import json
+            parsed_data = json.loads(data)
+            JsonOps.write(file_path, parsed_data)
+            return {"written": file_path}
 
         else:
             return {"error": f"Unknown tool: {tool_name}"}
