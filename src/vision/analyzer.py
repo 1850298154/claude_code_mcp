@@ -1,66 +1,24 @@
 # ============================================================================
-# 文件: vision/analyzer.py
-# 描述: VisionAnalyzer 数据结构定义，用于视觉模型调用
+# 文件: src/vision/analyzer.py
+# 描述: VisionAnalyzer 类定义，用于视觉模型调用
 #
 # 上游依赖:
-#   - core/types/*                (通用类型)
-#   - vision/models/glm4v.py     (GLM-4V 模型)
-#   - vision/models/gpt4v.py     (GPT-4V 模型，可选)
+#   - vision/types.py                        (ImageAnalysis, ModelType)
+#   - vision/models/glm4v.py              (GLM4VModel)
 #
 # 下游封装:
-#   - analyzer/analyze_image.py      (分析图像)
-#   - analyzer/detect_objects.py     (检测对象)
-#   - analyzer/extract_text.py      (提取文本 OCR)
-#   - analyzer/describe_scene.py     (描述场景)
-#   - analyzer/compare_images.py     (比较图像)
+#   - analyzer/*                               (操作函数)
+#   - mcp/tools/vision.py                    (MCP 工具封装)
 #
 # Bash 快速定位:
 #   find . -name "analyzer.py" -path "*/vision/*"
 # ============================================================================
 
-from dataclasses import dataclass
-from typing import List, Optional, Dict, Any
+from typing import List
 from pathlib import Path
-from enum import Enum
 
-
-class ModelType(Enum):
-    """支持的视觉模型类型"""
-
-    GLM4V = "glm4v"
-    GPT4V = "gpt4v"
-
-
-@dataclass
-class DetectedObject:
-    """检测到的对象数据结构
-
-    Attributes:
-        label: 对象标签
-        confidence: 置信度 (0-1)
-        bbox: 边界框 (x1, y1, x2, y2)
-    """
-
-    label: str
-    confidence: float
-    bbox: tuple[int, int, int, int]
-
-
-@dataclass
-class ImageAnalysis:
-    """图像分析结果
-
-    Attributes:
-        description: 图像描述
-        objects: 检测到的对象列表
-        text: 提取的文本
-        metadata: 额外元数据
-    """
-
-    description: str
-    objects: Optional[List[DetectedObject]] = None
-    text: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+from vision.types import ImageAnalysis, ModelConfig, DetectedObject
+from vision.models.glm4v import GLM4VModel
 
 
 class VisionAnalyzer:
@@ -69,18 +27,20 @@ class VisionAnalyzer:
     提供图像分析、对象检测、OCR 等视觉功能。
     """
 
-    def __init__(self, model: ModelType = ModelType.GLM4V, api_key: Optional[str] = None):
+    def __init__(self, model: str = "glm4v", api_key: str | None = None):
         """初始化 Analyzer
 
         Args:
             model: 使用的模型类型
             api_key: API 密钥（如果需要）
         """
-        self._model = model
-        self._api_key = api_key
-        # 模型实现在 vision/models/*.py
+        self._model_type = model
+        config = ModelConfig(api_key=api_key)
+        self._model = GLM4VModel(config)
 
-    def analyze_image(self, image_path: Path, prompt: str = "") -> ImageAnalysis:
+    def analyze_image(
+        self, image_path: Path | str, prompt: str = ""
+    ) -> ImageAnalysis:
         """分析图像
 
         实现位置: analyzer/analyze_image.py
@@ -92,9 +52,16 @@ class VisionAnalyzer:
         Returns:
             图像分析结果
         """
-        pass  # 实现在子文件中
+        # 转换为字符串
+        if isinstance(image_path, Path):
+            image_path = str(image_path)
 
-    def detect_objects(self, image_path: Path) -> List[DetectedObject]:
+        # 调用模型分析
+        description = self._model.analyze_image(image_path, prompt)
+
+        return ImageAnalysis(description=description)
+
+    def detect_objects(self, image_path: Path | str) -> List[DetectedObject]:
         """检测图像中的对象
 
         实现位置: analyzer/detect_objects.py
@@ -105,9 +72,13 @@ class VisionAnalyzer:
         Returns:
             检测到的对象列表
         """
-        pass  # 实现在子文件中
+        if isinstance(image_path, Path):
+            image_path = str(image_path)
 
-    def extract_text(self, image_path: Path) -> str:
+        objects = self._model.detect_objects(image_path)
+        return objects
+
+    def extract_text(self, image_path: Path | str) -> str:
         """提取图像中的文本（OCR）
 
         实现位置: analyzer/extract_text.py
@@ -118,9 +89,12 @@ class VisionAnalyzer:
         Returns:
             提取的文本
         """
-        pass  # 实现在子文件中
+        if isinstance(image_path, Path):
+            image_path = str(image_path)
 
-    def describe_scene(self, image_path: Path) -> str:
+        return self._model.extract_text(image_path)
+
+    def describe_scene(self, image_path: Path | str) -> str:
         """描述图像场景
 
         实现位置: analyzer/describe_scene.py
@@ -131,9 +105,13 @@ class VisionAnalyzer:
         Returns:
             场景描述
         """
-        pass  # 实现在子文件中
+        prompt = "请详细描述这张图片的内容和场景"
+        result = self.analyze_image(image_path, prompt)
+        return result.description
 
-    def compare_images(self, image1_path: Path, image2_path: Path) -> dict:
+    def compare_images(
+        self, image1_path: Path | str, image2_path: Path | str
+    ) -> dict:
         """比较两张图像
 
         实现位置: analyzer/compare_images.py
@@ -145,4 +123,24 @@ class VisionAnalyzer:
         Returns:
             比较结果（相似度、差异等）
         """
-        pass  # 实现在子文件中
+        # 简单实现：描述两张图像并比较描述
+        desc1 = self.describe_scene(image1_path)
+        desc2 = self.describe_scene(image2_path)
+
+        return {
+            "image1_description": desc1,
+            "image2_description": desc2,
+            "similarity": 1.0 if desc1 == desc2 else 0.0,
+        }
+
+    def close(self):
+        """关闭分析器"""
+        self._model.close()
+
+    def __enter__(self):
+        """支持上下文管理器"""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """退出上下文管理器"""
+        self.close()
