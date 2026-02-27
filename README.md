@@ -66,7 +66,42 @@ uv run pytest . --cov=../src --cov-report=html
 ### 运行示例
 
 ```bash
+# Claude Meta 模块示例
 uv run python examples/claude_meta_usage.py
+
+# Academic 模块示例
+uv run python examples/academic_usage.py
+
+# Vision 模块示例
+uv run python examples/vision_usage.py
+
+# GraphRAG 模块示例
+uv run python examples/graphrag_usage.py
+
+# Utils 模块示例
+uv run python examples/utils_usage.py
+```
+
+### 作为模块运行
+
+```bash
+# Claude Meta
+uv run python -m claude_meta
+
+# Academic
+uv run python -m academic
+
+# Vision
+uv run python -m vision
+
+# GraphRAG
+uv run python -m graphrag
+
+# Utils
+uv run python -m utils
+
+# MCP 服务器
+uv run python -m mcp
 ```
 
 ---
@@ -149,6 +184,35 @@ builder = GraphBuilder()
 graph = builder.build_from_project("/path/to/project")
 qa = QASystem(graph=graph)
 answer = qa.ask("这个项目的核心模块是什么？")
+```
+
+### MCP (`src/mcp/`)
+
+MCP (Model Context Protocol) 服务器，提供统一的工具接口。
+
+```python
+from mcp.server import MCPServer
+from mcp.tools import get_all_tools
+
+# 启动 MCP 服务器
+# uv run python -m mcp
+
+# 获取所有可用工具
+tools = get_all_tools()
+print(f"Available tools: {[tool.name for tool in tools]}")
+```
+
+### Utils (`src/utils/`)
+
+通用文件和字符串操作工具。
+
+```python
+from utils.file_ops import FileOps
+from utils.string_ops import StringOps
+
+FileOps.write('file.txt', 'Hello World')
+content = FileOps.read('file.txt')
+truncated = StringOps.truncate('long text...', max_length=10)
 ```
 
 ---
