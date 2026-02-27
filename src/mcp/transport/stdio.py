@@ -3,39 +3,45 @@
 # 描述: Stdio 传输层
 #
 # 上游依赖: 无
-# 下游封装: mcp/server/start.py
+# 下游封装: mcp/server.py, mcp/cli.py
 #
 # Bash 快速定位:
 #   find . -name "stdio.py" -path "*/transport/*"
 # ============================================================================
 
 import sys
+import asyncio
 import json
-from typing import Dict, Any
-
-from mcp.server import MCPServer
+from typing import Optional
 
 
-def start_stdio_server(server: MCPServer):
-    """启动 Stdio MCP 服务器
+class StdioTransport:
+    """Stdio 传输层
 
-    Args:
-        server: MCP 服务器实例
+    通过标准输入输出进行 MCP 通信。
     """
-    while True:
-        # 读取请求
-        line = sys.stdin.readline()
+
+    def __init__(self):
+        """初始化传输层"""
+        self._loop: Optional[asyncio.AbstractEventLoop] = None
+
+    async def read_line(self) -> str | None:
+        """读取一行输入
+
+        Returns:
+            输入行，如果 EOF 则返回 None
+        """
+        loop = asyncio.get_event_loop()
+        line = await loop.run_in_executor(None, sys.stdin.readline)
         if not line:
-            break
+            return None
+        return line.rstrip("\n")
 
-        request = json.loads(line)
+    async def write_line(self, line: str):
+        """写入一行输出
 
-        # 处理请求
-        response = {"jsonrpc": "2.0", "id": request.get("id", "1"), "method": request.get("method")}
-
-        if "params" in request:
-            result = server.call_tool(request["method"], request["params"])
-            response["result"] = result
-
-        # 发送响应
-        print(json.dumps(response), flush=sys.stdout)
+        Args:
+            line: 要写入的内容
+        """
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, lambda: print(line, file=sys.stdout, flush=True))
