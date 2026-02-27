@@ -1,77 +1,22 @@
 # ============================================================================
-# 文件: graphrag/builder.py
-# 描述: GraphBuilder 数据结构定义，用于知识图谱构建
+# 文件: src/graphrag/builder.py
+# 描述: GraphBuilder 类定义，用于知识图谱构建
 #
 # 上游依赖:
-#   - core/types/*                           (通用类型)
+#   - graphrag/types.py                       (Graph, Entity, Relation)
 #
 # 下游封装:
-#   - builder/build_from_project.py         (从项目构建图谱)
-#   - builder/build_from_docs.py            (从文档构建图谱)
-#   - builder/add_entity.py                 (添加实体)
-#   - builder/add_relation.py               (添加关系)
-#   - builder/query_graph.py                (查询图谱)
+#   - builder/*                                 (操作函数)
+#   - mcp/tools/graphrag.py                     (MCP 工具封装)
 #
 # Bash 快速定位:
 #   find . -name "builder.py" -path "*/graphrag/*"
 # ============================================================================
 
-from dataclasses import dataclass
-from typing import List, Optional, Dict, Any
 from pathlib import Path
+from typing import List, Optional
 
-
-@dataclass
-class Entity:
-    """图谱实体数据结构
-
-    Attributes:
-        id: 实体唯一标识符
-        type: 实体类型
-        name: 实体名称
-        description: 实体描述
-        attributes: 额外属性
-    """
-
-    id: str
-    type: str
-    name: str
-    description: Optional[str] = None
-    attributes: Optional[Dict[str, Any]] = None
-
-
-@dataclass
-class Relation:
-    """图谱关系数据结构
-
-    Attributes:
-        id: 关系唯一标识符
-        source_id: 源实体 ID
-        target_id: 目标实体 ID
-        type: 关系类型
-        attributes: 额外属性
-    """
-
-    id: str
-    source_id: str
-    target_id: str
-    type: str
-    attributes: Optional[Dict[str, Any]] = None
-
-
-@dataclass
-class Graph:
-    """知识图谱数据结构
-
-    Attributes:
-        entities: 实体列表
-        relations: 关系列表
-        metadata: 图谱元数据
-    """
-
-    entities: List[Entity]
-    relations: List[Relation]
-    metadata: Optional[Dict[str, Any]] = None
+from graphrag.types import Graph, Entity, Relation, EntityType
 
 
 class GraphBuilder:
@@ -84,7 +29,12 @@ class GraphBuilder:
         """初始化 Builder"""
         self._graph: Optional[Graph] = None
 
-    def build_from_project(self, project_path: Path) -> Graph:
+    @property
+    def graph(self) -> Optional[Graph]:
+        """获取当前图谱"""
+        return self._graph
+
+    def build_from_project(self, project_path: Path | str) -> Graph:
         """从项目构建图谱
 
         实现位置: builder/build_from_project.py
@@ -95,7 +45,68 @@ class GraphBuilder:
         Returns:
             构建的知识图谱
         """
-        pass  # 实现在子文件中
+        if isinstance(project_path, Path):
+            project_path = str(project_path)
+
+        # 扫描项目目录
+        project_dir = Path(project_path)
+        entities = []
+        relations = []
+
+        # 添加项目实体
+        project_entity = Entity(
+            id=f"project:{project_dir.name}",
+            type=EntityType.PROJECT,
+            name=project_dir.name,
+            description=f"Project at {project_path}",
+            source=str(project_dir),
+            properties={"path": str(project_dir)},
+        )
+        entities.append(project_entity)
+
+        # 扫描 Python 文件
+        for file_path in project_dir.rglob("*.py"):
+            file_entity = Entity(
+                id=f"file:{file_path}",
+                type=EntityType.FILE,
+                name=file_path.name,
+                description=f"Python file: {file_path.name}",
+                source=str(file_path),
+                properties={"path": str(file_path)},
+            )
+            entities.append(file_entity)
+
+            # 添加文件到项目的关系
+            relation = Relation(
+                id=f"relation:{project_dir.name}-{file_path.name}",
+                source_id=project_entity.id,
+                target_id=file_entity.id,
+                type="contains",
+            )
+            relations.append(relation)
+
+        # 扫描子目录
+        for subdir in project_dir.iterdir():
+            if subdir.is_dir():
+                subdir_entity = Entity(
+                    id=f"directory:{subdir.name}",
+                    type=EntityType.PROJECT,
+                    name=subdir.name,
+                    description=f"Directory: {subdir.name}",
+                    source=str(subdir),
+                )
+                entities.append(subdir_entity)
+
+                relation = Relation(
+                    id=f"relation:{project_dir.name}-{subdir.name}",
+                    source_id=project_entity.id,
+                    target_id=subdir_entity.id,
+                    type="contains",
+                )
+                relations.append(relation)
+
+        self._graph = Graph(entities=entities, relations=relations)
+        return self._graph
 
     def build_from_docs(self, docs: List[Path]) -> Graph:
         """从文档构建图谱
@@ -108,7 +119,25 @@ class GraphBuilder:
         Returns:
             构建的知识图谱
         """
-        pass  # 实现在子文件中
+        entities = []
+        relations = []
+
+        for doc_path in docs:
+            if isinstance(doc_path, str):
+                doc_path = Path(doc_path)
+
+            # 添加文档实体
+            doc_entity = Entity(
+                id=f"doc:{doc_path.name}",
+                type=EntityType.FILE,
+                name=doc_path.name,
+                description=f"Document: {doc_path.name}",
+                source=str(doc_path),
+            )
+            entities.append(doc_entity)
+
+        self._graph = Graph(entities=entities, relations=relations)
+        return self._graph
 
     def add_entity(self, entity: Entity) -> None:
         """添加实体
@@ -118,7 +147,10 @@ class GraphBuilder:
         Args:
             entity: 要添加的实体
         """
-        pass  # 实现在子文件中
+        if self._graph is None:
+            self._graph = Graph(entities=[], relations=[])
+
+        self._graph.entities.append(entity)
 
     def add_relation(self, relation: Relation) -> None:
         """添加关系
@@ -128,9 +160,12 @@ class GraphBuilder:
         Args:
             relation: 要添加的关系
         """
-        pass  # 实现在子文件中
+        if self._graph is None:
+            self._graph = Graph(entities=[], relations=[])
 
-    def query_graph(self, query: str) -> List[Dict[str, Any]]:
+        self._graph.relations.append(relation)
+
+    def query_graph(self, query: str) -> List[dict]:
         """查询图谱
 
         实现位置: builder/query_graph.py
@@ -141,4 +176,33 @@ class GraphBuilder:
         Returns:
             查询结果
         """
-        pass  # 实现在子文件中
+        if self._graph is None:
+            return []
+
+        results = []
+
+        # 简单的实体匹配查询
+        for entity in self._graph.entities:
+            if query.lower() in entity.name.lower():
+                results.append({
+                    "type": "entity",
+                    "id": entity.id,
+                    "name": entity.name,
+                    "description": entity.description,
+                })
+
+        # 简单的关系匹配查询
+        for relation in self._graph.relations:
+            if query.lower() in relation.type.lower():
+                results.append({
+                    "type": "relation",
+                    "id": relation.id,
+                    "source": relation.source_id,
+                    "target": relation.target_id,
+                })
+
+        return results
+
+    def clear(self) -> None:
+        """清空图谱"""
+        self._graph = None
