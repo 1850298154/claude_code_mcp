@@ -10,5 +10,6 @@
 # ============================================================================
 
 from .stdio import start_stdio_server
+from .websocket import WebSocketTransport, start_websocket_server
 
-__all__ = ["start_stdio_server"]
+__all__ = ["start_stdio_server", "WebSocketTransport", "start_websocket_server"]

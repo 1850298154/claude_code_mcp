@@ -27,7 +27,7 @@ from claude_meta.config.paths import ClaudeMetaPaths
 from claude_meta.reader import ClaudeMetaReader
 from academic.scholar_class import Scholar
 from vision.analyzer_class import VisionAnalyzer
-from vision.types import ModelType, ModelConfig
+from vision.types import ModelConfig
 from graphrag.builder_class import GraphBuilder
 from graphrag.qa import QASystem
 from audio.speaker import Speaker
@@ -62,15 +62,15 @@ class MCPServer:
             self._scholar = Scholar(api_key=None)  # 使用默认 API key
 
         if self._vision_analyzer is None:
-            config = ModelConfig(model_type=ModelType.GLM4V, api_key=None)
-            self._vision_analyzer = VisionAnalyzer(config)
+            config = ModelConfig(api_key=None)
+            self._vision_analyzer = VisionAnalyzer(model="glm4v", api_key=None)
 
         if self._graph_builder is None:
             self._graph_builder = GraphBuilder()
 
         if self._qa_system is None:
             from graphrag.types import Graph
-            self._qa_system = QASystem(Graph())
+            self._qa_system = QASystem(Graph(entities=[], relations=[]))
 
         if self._speaker is None:
             self._speaker = Speaker()
@@ -259,11 +259,22 @@ class MCPServer:
         """启动 MCP 服务器
 
         Args:
-            transport: 传输层对象
+            transport: 传输层对象 (StdioTransport 或 WebSocketTransport)
         """
         self._running = True
         print("MCP Server started", flush=True)
 
+        # 检查传输类型
+        from cc_mcp.transport.stdio import StdioTransport
+        from cc_mcp.transport.websocket import WebSocketTransport
+
+        if isinstance(transport, WebSocketTransport):
+            # WebSocket 模式：设置请求处理器并启动服务器
+            transport._request_handler = self._handle_request
+            await transport.start_server(self._init_modules)
+            return
+
+        # Stdio 模式：传统循环读取
         while self._running:
             try:
                 # 读取请求
@@ -274,41 +285,8 @@ class MCPServer:
                 request = json.loads(line)
 
                 # 处理请求
-                if request.get("method") == "initialize":
-                    response = {
-                        "jsonrpc": "2.0",
-                        "id": request.get("id"),
-                        "result": {
-                            "protocolVersion": "2024-11-05",
-                            "serverInfo": {
-                                "name": "claude-code-mcp",
-                                "version": "0.1.0"
-                            },
-                            "capabilities": {
-                                "tools": {"listChanged": True}
-                            }
-                        }
-                    }
-                    await transport.write_line(json.dumps(response))
-
-                elif request.get("method") == "tools/list":
-                    response = {
-                        "jsonrpc": "2.0",
-                        "id": request.get("id"),
-                        "result": {"tools": self.get_tools()}
-                    }
-                    await transport.write_line(json.dumps(response))
-
-                elif request.get("method") == "tools/call":
-                    tool_name = request.get("params", {}).get("name")
-                    args = request.get("params", {}).get("arguments", {})
-                    result = self.call_tool(tool_name, args)
-                    response = {
-                        "jsonrpc": "2.0",
-                        "id": request.get("id"),
-                        "result": result
-                    }
-                    await transport.write_line(json.dumps(response))
+                response = await self._handle_request(request)
+                await transport.write_line(json.dumps(response))
 
             except json.JSONDecodeError:
                 continue
@@ -322,6 +300,74 @@ class MCPServer:
                     }
                 }
                 await transport.write_line(json.dumps(error_response))
+
+    async def _handle_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
+        """处理 MCP 请求
+
+        Args:
+            request: MCP 请求
+
+        Returns:
+            MCP 响应
+        """
+        method = request.get("method")
+        params = request.get("params", {})
+
+        # 初始化模块（延迟初始化）
+        self._init_modules()
+
+        try:
+            if method == "initialize":
+                response = {
+                    "jsonrpc": "2.0",
+                    "id": request.get("id"),
+                    "result": {
+                        "protocolVersion": "2024-11-05",
+                        "serverInfo": {
+                            "name": "claude-code-mcp",
+                            "version": "0.1.0"
+                        },
+                        "capabilities": {
+                            "tools": {"listChanged": True}
+                        }
+                    }
+                }
+            elif method == "tools/list":
+                response = {
+                    "jsonrpc": "2.0",
+                    "id": request.get("id"),
+                    "result": {"tools": self.get_tools()}
+                }
+            elif method == "tools/call":
+                tool_name = params.get("name")
+                args = params.get("arguments", {})
+                result = self.call_tool(tool_name, args)
+                response = {
+                    "jsonrpc": "2.0",
+                    "id": request.get("id"),
+                    "result": result
+                }
+            else:
+                response = {
+                    "jsonrpc": "2.0",
+                    "id": request.get("id"),
+                    "error": {
+                        "code": -32601,
+                        "message": f"Unknown method: {method}"
+                    }
+                }
+
+            return response
+
+        except Exception as e:
+            return {
+                "jsonrpc": "2.0",
+                "id": request.get("id"),
+                "error": {
+                    "code": -32603,
+                    "message": str(e)
+                }
+            }
 
     def stop(self):
         """停止服务器"""
