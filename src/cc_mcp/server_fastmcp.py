@@ -470,7 +470,7 @@ if ENABLE_AUDIO:
         """延迟初始化 Speaker"""
         global _speaker
         if _speaker is None:
-            from audio.speaker import Speaker
+            from src.audio.speaker import Speaker
             _speaker = Speaker()
         return _speaker
 
@@ -485,7 +485,7 @@ if ENABLE_AUDIO:
 
         返回播放结果。
         """
-        from audio.speaker import Speaker
+        from src.audio.speaker import Speaker
         from json import dumps
         speaker = _get_speaker()
         if async_mode:
