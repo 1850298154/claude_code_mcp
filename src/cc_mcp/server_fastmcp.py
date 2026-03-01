@@ -21,6 +21,7 @@ Claude Code MCP Server - 使用官方 FastMCP 实现
   {"type": "http", "url": "http://localhost:8000/mcp"}
 """
 
+import os
 from mcp.server import FastMCP
 from .config import (
     HOST, PORT,
@@ -267,7 +268,8 @@ if ENABLE_VISION:
             from dotenv import load_dotenv
 
             load_dotenv()
-            api_key = None  # 从环境变量获取或设为None
+            GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+            api_key = GEMINI_API_KEY  # 从环境变量获取 API Key
 
             _vision_client = OpenAI(
                 api_key=api_key,
