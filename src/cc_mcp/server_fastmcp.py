@@ -501,7 +501,7 @@ if ENABLE_AUDIO:
 
 def _print_module_banner(title: str, resources: list, enabled: bool):
     """打印模块横幅和资源列表"""
-    status = "[✓]" if enabled else "[ ]"
+    status = "[ON]" if enabled else "[OFF]"
     header = f"\n    ║ {status} {title}"
     print(header)
     for resource in resources:
@@ -552,5 +552,9 @@ def _get_banner_text() -> str:
 
 
 if __name__ == "__main__":
-    print(_get_banner_text())
+    import sys
+    # 输出到 stderr 确保在 uvicorn 启动前显示
+    banner = _get_banner_text()
+    sys.stderr.write(banner)
+    sys.stderr.flush()
     mcp.run(transport="streamable-http")
