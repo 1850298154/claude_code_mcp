@@ -42,6 +42,46 @@ mcp = FastMCP(
 
 
 # ============================================================================
+# 模块资源列表定义
+# ============================================================================
+
+CLAUDE_META_RESOURCES = [
+    "get_sessions - 获取 Claude Code 所有会话列表",
+    "get_chat_history - 获取指定会话的聊天历史",
+    "get_memory - 获取 Claude Code 的记忆内容",
+    "restore_session - 恢复指定会话",
+    "get_project_context - 获取指定项目的上下文信息",
+]
+
+ACADEMIC_RESOURCES = [
+    "search_papers - 搜索学术论文",
+    "get_bibtex - 获取论文的 BibTeX 格式引用",
+    "get_abstract - 获取论文摘要",
+    "verify_citations - 验证 BibTeX 引用",
+]
+
+VISION_RESOURCES = [
+    "analyze_image - 分析图片内容",
+    "detect_objects - 检测图片中的对象",
+    "extract_text - 提取图片中的文本 (OCR)",
+    "describe_scene - 描述图片场景",
+    "compare_images - 比较两张图片",
+]
+
+GRAPHRAG_RESOURCES = [
+    "build_graph - 从项目目录构建知识图谱",
+    "add_entity - 向知识图谱添加实体",
+    "add_relation - 向知识图谱添加关系",
+    "query_graph - 查询知识图谱",
+    "ask_question - 向知识图谱问答系统提问",
+]
+
+AUDIO_RESOURCES = [
+    "speak - 文本转语音播报",
+]
+
+
+# ============================================================================
 # Claude Meta 工具
 # ============================================================================
 
@@ -459,35 +499,58 @@ if ENABLE_AUDIO:
 # 主入口
 # ============================================================================
 
-def _get_enabled_modules():
-    """获取已启用的模块列表"""
-    enabled = []
-    if ENABLE_CLAUDE_META:
-        enabled.append("Claude Meta")
-    if ENABLE_ACADEMIC:
-        enabled.append("Academic (Semantic Scholar)")
-    if ENABLE_VISION:
-        enabled.append("Vision")
-    if ENABLE_GRAPHRAG:
-        enabled.append("GraphRAG")
-    if ENABLE_AUDIO:
-        enabled.append("Audio")
-    return enabled
+def _print_module_banner(title: str, resources: list, enabled: bool):
+    """打印模块横幅和资源列表"""
+    status = "[✓]" if enabled else "[ ]"
+    header = f"\n    ║ {status} {title}"
+    print(header)
+    for resource in resources:
+        print(f"    ║      - {resource}")
 
 
-if __name__ == "__main__":
-    enabled_modules = _get_enabled_modules()
-    modules_list = "\n    ║    ".join(enabled_modules) if enabled_modules else "    ║    (无)"
-
-    print(f"""
+def _get_banner_text() -> str:
+    """生成启动横幅文本"""
+    banner = f"""
     ╔═══════════════════════════════════════════════════════╗
     ║           Claude Code MCP Server                         ║
     ╠═══════════════════════════════════════════════════════╣
     ║  URL: http://{HOST}:{PORT}/mcp                           ║
-    ║  SSE:  http://{HOST}:{PORT}/sse                           ║
+    ║  SSE: http://{HOST}:{PORT}/sse                           ║
     ╠═══════════════════════════════════════════════════════╣
-    ║  已启用模块:                                             ║
-    ║    {modules_list}                          ║
+    ║  已启用模块:                                             ║"""
+
+    # 添加模块横幅
+    if ENABLE_CLAUDE_META:
+        _print_module_banner("Claude Meta", CLAUDE_META_RESOURCES, True)
+    else:
+        _print_module_banner("Claude Meta", CLAUDE_META_RESOURCES, False)
+
+    if ENABLE_ACADEMIC:
+        _print_module_banner("Academic (Semantic Scholar)", ACADEMIC_RESOURCES, True)
+    else:
+        _print_module_banner("Academic (Semantic Scholar)", ACADEMIC_RESOURCES, False)
+
+    if ENABLE_VISION:
+        _print_module_banner("Vision", VISION_RESOURCES, True)
+    else:
+        _print_module_banner("Vision", VISION_RESOURCES, False)
+
+    if ENABLE_GRAPHRAG:
+        _print_module_banner("GraphRAG", GRAPHRAG_RESOURCES, True)
+    else:
+        _print_module_banner("GraphRAG", GRAPHRAG_RESOURCES, False)
+
+    if ENABLE_AUDIO:
+        _print_module_banner("Audio", AUDIO_RESOURCES, True)
+    else:
+        _print_module_banner("Audio", AUDIO_RESOURCES, False)
+
+    footer = f"""
     ╚═══════════════════════════════════════════════════════════╝
-    """)
+    """
+    return banner + footer
+
+
+if __name__ == "__main__":
+    print(_get_banner_text())
     mcp.run(transport="streamable-http")
