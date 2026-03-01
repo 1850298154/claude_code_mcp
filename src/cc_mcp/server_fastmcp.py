@@ -552,10 +552,5 @@ def _get_banner_text() -> str:
 
 
 if __name__ == "__main__":
-    import sys
-    # 输出到 stderr 确保在 uvicorn 启动前显示
-    banner = _get_banner_text()
-    sys.stderr.write(banner)
-    sys.stderr.flush()
-    # 使用SSE模式，建立持久连接，不需要session管理
-    mcp.run(transport="sse")
+    # 使用streamable-http模式
+    mcp.run(transport="streamable-http")
