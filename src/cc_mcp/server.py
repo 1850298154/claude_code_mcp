@@ -259,7 +259,7 @@ class MCPServer:
         """启动 MCP 服务器
 
         Args:
-            transport: 传输层对象 (StdioTransport 或 WebSocketTransport)
+            transport: 传输层对象 (StdioTransport, WebSocketTransport 或 HTTPTransport)
         """
         self._running = True
         print("MCP Server started", flush=True)
@@ -267,10 +267,17 @@ class MCPServer:
         # 检查传输类型
         from cc_mcp.transport.stdio import StdioTransport
         from cc_mcp.transport.websocket import WebSocketTransport
+        from cc_mcp.transport.http import HTTPTransport
 
         if isinstance(transport, WebSocketTransport):
             # WebSocket 模式：设置请求处理器并启动服务器
             transport._request_handler = self._handle_request
+            await transport.start_server(self._init_modules)
+            return
+
+        if isinstance(transport, HTTPTransport):
+            # HTTP 模式：设置请求处理器并启动服务器
+            transport.set_request_handler(self._handle_request)
             await transport.start_server(self._init_modules)
             return
 

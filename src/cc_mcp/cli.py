@@ -13,9 +13,10 @@
 
 提供命令行接口启动 MCP 服务器。
 
-支持两种传输模式：
+支持三种传输模式：
 - stdio: 标准输入输出（每次请求启动新进程）
 - websocket: WebSocket 持久连接（服务器持续运行，支持状态共享）
+- http: HTTP RESTful API（通过 HTTP 调用 MCP）
 """
 
 import asyncio
@@ -25,6 +26,7 @@ import argparse
 from cc_mcp.server import MCPServer
 from cc_mcp.transport.stdio import StdioTransport
 from cc_mcp.transport.websocket import WebSocketTransport
+from cc_mcp.transport.http import HTTPTransport
 
 
 def parse_args():
@@ -36,22 +38,22 @@ def parse_args():
 
     parser.add_argument(
         "--transport", "-t",
-        choices=["stdio", "websocket"],
+        choices=["stdio", "websocket", "http"],
         default="stdio",
-        help="传输模式: stdio (每次启动) 或 websocket (持久连接)"
+        help="传输模式: stdio (每次启动), websocket (持久连接), 或 http (REST API)"
     )
 
     parser.add_argument(
         "--host", "-H",
         default="127.0.0.1",
-        help="WebSocket 监听地址 (仅 websocket 模式)"
+        help="监听地址 (仅 websocket/http 模式)"
     )
 
     parser.add_argument(
         "--port", "-p",
         type=int,
-        default=8765,
-        help="WebSocket 监听端口 (仅 websocket 模式)"
+        default=None,
+        help="监听端口 (仅 websocket/http 模式，默认: websocket=8765, http=8000)"
     )
 
     return parser.parse_args()
@@ -66,9 +68,16 @@ async def main():
 
     # 根据传输模式创建传输层
     if args.transport == "websocket":
-        transport = WebSocketTransport(args.host, args.port)
-        print(f"[WebSocket] Starting server on ws://{args.host}:{args.port}", file=sys.stderr)
+        port = args.port or 8765
+        transport = WebSocketTransport(args.host, port)
+        print(f"[WebSocket] Starting server on ws://{args.host}:{port}", file=sys.stderr)
         print(f"[WebSocket] Server will keep running, state is preserved", file=sys.stderr)
+    elif args.transport == "http":
+        port = args.port or 8000
+        transport = HTTPTransport(args.host, port)
+        print(f"[HTTP] Starting server on http://{args.host}:{port}/mcp", file=sys.stderr)
+        print(f"[HTTP] Health check: http://{args.host}:{port}/health", file=sys.stderr)
+        print(f"[HTTP] Server will keep running, state is preserved", file=sys.stderr)
     else:  # stdio
         transport = StdioTransport()
         print("[Stdio] Server in stdio mode", file=sys.stderr)

@@ -44,12 +44,11 @@ class WebSocketTransport:
         self._server = None
         self._running = False
 
-    async def handle_connection(self, websocket, path: str):
+    async def handle_connection(self, websocket):
         """处理客户端连接
 
         Args:
             websocket: WebSocket 连接
-            path: 连接路径
         """
         self._websocket = websocket
         logger.info(f"Client connected from {websocket.remote_address}")
