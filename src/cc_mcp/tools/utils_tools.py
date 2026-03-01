@@ -1,12 +1,12 @@
 # ============================================================================
-# 文件: src/mcp/tools/utils_tools.py
+# 文件: src/cc_mcp/tools/utils_tools.py
 # 描述: Utils MCP 工具定义
 #
 # 上游依赖: utils/file_ops/, utils/string_ops/, utils/json_ops/
-# 下游封装: mcp/server.py
+# 下游封装: cc_mcp/server.py
 #
 # Bash 快速定位:
-#   find src -name "utils_tools.py" -path "*/mcp/tools/*"
+#   find src -name "utils_tools.py" -path "*/cc_mcp/tools/*"
 # ============================================================================
 
 """Utils MCP 工具"""

@@ -10,6 +10,6 @@
 # ============================================================================
 
 from .types import Paper, Citation, SearchOptions
-from .scholar import Scholar
+from .scholar_class import Scholar
 
 __all__ = ["Paper", "Citation", "SearchOptions", "Scholar"]

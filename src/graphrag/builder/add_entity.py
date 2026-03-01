@@ -12,6 +12,7 @@
 #   find . -name "add_entity.py" -path "*/builder/*"
 # ============================================================================
 
+from typing import List
 from graphrag.types import Entity
 
 

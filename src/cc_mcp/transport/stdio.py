@@ -1,9 +1,9 @@
 # ============================================================================
-# 文件: src/mcp/transport/stdio.py
+# 文件: src/cc_mcp/transport/stdio.py
 # 描述: Stdio 传输层
 #
 # 上游依赖: 无
-# 下游封装: mcp/server.py, mcp/cli.py
+# 下游封装: cc_mcp/server.py, cc_mcp/cli.py
 #
 # Bash 快速定位:
 #   find . -name "stdio.py" -path "*/transport/*"
@@ -45,3 +45,12 @@ class StdioTransport:
         """
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, lambda: print(line, file=sys.stdout, flush=True))
+
+
+def start_stdio_server():
+    """启动 stdio 服务器"""
+    from ..cli import main
+    asyncio.run(main())
+
+
+__all__ = ["StdioTransport", "start_stdio_server"]

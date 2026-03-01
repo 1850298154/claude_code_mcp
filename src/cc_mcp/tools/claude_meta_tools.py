@@ -1,5 +1,5 @@
 # ============================================================================
-# 文件: src/mcp/tools/claude_meta_tools.py
+# 文件: src/cc_mcp/tools/claude_meta_tools.py
 # 描述: Claude Meta MCP 工具定义
 #
 # 上游依赖: claude_meta/reader/, claude_meta/analyzer/

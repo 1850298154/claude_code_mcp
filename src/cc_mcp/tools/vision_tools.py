@@ -1,12 +1,12 @@
 # ============================================================================
-# 文件: src/mcp/tools/vision_tools.py
+# 文件: src/cc_mcp/tools/vision_tools.py
 # 描述: Vision MCP 工具定义
 #
 # 上游依赖: vision/analyzer/
-# 下游封装: mcp/server.py
+# 下游封装: cc_mcp/server.py
 #
 # Bash 快速定位:
-#   find src -name "vision_tools.py" -path "*/mcp/tools/*"
+#   find src -name "vision_tools.py" -path "*/cc_mcp/tools/*"
 # ============================================================================
 
 """Vision MCP 工具"""

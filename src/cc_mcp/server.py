@@ -1,35 +1,36 @@
 # ============================================================================
-# 文件: src/mcp/server.py
+# 文件: src/cc_mcp/server.py
 # 描述: MCPServer 类定义，用于 MCP 服务器实现
 #
 # 上游依赖:
-#   - mcp/tools/*                             (MCP 工具定义)
-#   - claude_meta/reader                    (ClaudeMetaReader)
-#   - academic/scholar                        (Scholar)
-#   - vision/analyzer                       (VisionAnalyzer)
-#   - graphrag/builder                       (GraphBuilder)
-#   - graphrag/qa.qa_system                 (QASystem)
+#   - cc_mcp/tools/*                          (MCP 工具定义)
+#   - claude_meta/reader                     (ClaudeMetaReader)
+#   - academic/scholar                       (Scholar)
+#   - vision/analyzer                        (VisionAnalyzer)
+#   - graphrag/builder                        (GraphBuilder)
+#   - graphrag/qa.qa_system                  (QASystem)
 #
 # 下游封装:
-#   - mcp/cli.py                               (CLI 入口)
-#   - mcp/transport/stdio.py                   (传输层)
+#   - cc_mcp/cli.py                           (CLI 入口)
+#   - cc_mcp/transport/stdio.py               (传输层)
 #
 # Bash 快速定位:
-#   find . -name "server.py" -path "*/mcp/*"
+#   find . -name "server.py" -path "*/cc_mcp/*"
 # ============================================================================
 
 from typing import Dict, Any, List, Optional
 import json
 import asyncio
 
-from mcp.tools import get_all_tools
+from cc_mcp.tools import get_all_tools
 from claude_meta.config.paths import ClaudeMetaPaths
 from claude_meta.reader import ClaudeMetaReader
-from academic.scholar import Scholar
-from vision.analyzer import VisionAnalyzer
+from academic.scholar_class import Scholar
+from vision.analyzer_class import VisionAnalyzer
 from vision.types import ModelType, ModelConfig
-from graphrag.builder import GraphBuilder
+from graphrag.builder_class import GraphBuilder
 from graphrag.qa import QASystem
+from audio.speaker import Speaker
 
 
 class MCPServer:
@@ -45,6 +46,7 @@ class MCPServer:
         self._vision_analyzer: Optional[VisionAnalyzer] = None
         self._graph_builder: Optional[GraphBuilder] = None
         self._qa_system: Optional[QASystem] = None
+        self._speaker: Optional[Speaker] = None
         self._running: bool = False
 
     def _init_modules(self):
@@ -69,6 +71,9 @@ class MCPServer:
         if self._qa_system is None:
             from graphrag.types import Graph
             self._qa_system = QASystem(Graph())
+
+        if self._speaker is None:
+            self._speaker = Speaker()
 
     def get_tools(self) -> List[Dict[str, Any]]:
         """获取可用工具列表
@@ -218,6 +223,16 @@ class MCPServer:
             parsed_data = json.loads(data)
             JsonOps.write(file_path, parsed_data)
             return {"written": file_path}
+
+        # Audio 工具
+        elif tool_name == "speak":
+            text = args.get("text", "")
+            async_mode = args.get("async", False)
+            if async_mode:
+                success = self._speaker.speak_async(text)
+            else:
+                success = self._speaker.speak(text)
+            return {"played": success}
 
         else:
             return {"error": f"Unknown tool: {tool_name}"}

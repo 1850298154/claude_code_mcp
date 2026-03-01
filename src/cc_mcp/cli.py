@@ -1,12 +1,12 @@
 # ============================================================================
-# 文件: src/mcp/cli.py
+# 文件: src/cc_mcp/cli.py
 # 描述: MCP 服务器 CLI 入口
 #
-# 上游依赖: mcp/server.py, mcp/transport/stdio.py
+# 上游依赖: cc_mcp/server.py, cc_mcp/transport/stdio.py
 # 下游封装: 无（作为 CLI 入口）
 #
 # Bash 快速定位:
-#   find src -name "cli.py" -path "*/mcp/*"
+#   find src -name "cli.py" -path "*/cc_mcp/*"
 # ============================================================================
 
 """MCP 服务器 CLI 入口
@@ -17,8 +17,8 @@
 import asyncio
 import sys
 
-from mcp.server import MCPServer
-from mcp.transport.stdio import StdioTransport
+from cc_mcp.server import MCPServer
+from cc_mcp.transport.stdio import StdioTransport
 
 
 async def main():

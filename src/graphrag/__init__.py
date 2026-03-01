@@ -10,7 +10,7 @@
 # ============================================================================
 
 from .types import EntityType, Entity, Relation, Graph, QAContext, Answer
-from .builder import GraphBuilder
+from .builder_class import GraphBuilder
 from .qa.qa_system import QASystem
 
 __all__ = [

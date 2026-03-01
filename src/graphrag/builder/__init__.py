@@ -10,14 +10,12 @@
 # ============================================================================
 
 from .build_from_project import build_from_project
-from .build_from_docs import build_from_docs
 from .add_entity import add_entity
 from .add_relation import add_relation
 from .query_graph import query_graph
 
 __all__ = [
     "build_from_project",
-    "build_from_docs",
     "add_entity",
     "add_relation",
     "query_graph",

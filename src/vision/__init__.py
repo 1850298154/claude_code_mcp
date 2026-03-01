@@ -10,7 +10,7 @@
 # ============================================================================
 
 from .types import ModelType, DetectedObject, ImageAnalysis, ModelConfig
-from .analyzer import VisionAnalyzer
+from .analyzer_class import VisionAnalyzer
 
 __all__ = [
     "ModelType",

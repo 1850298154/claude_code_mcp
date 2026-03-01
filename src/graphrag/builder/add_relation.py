@@ -12,6 +12,7 @@
 #   find . -name "add_relation.py" -path "*/builder/*"
 # ============================================================================
 
+from typing import List
 from graphrag.types import Relation
 
 

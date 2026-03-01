@@ -1,5 +1,5 @@
 # ============================================================================
-# 文件: src/mcp/tools/academic_tools.py
+# 文件: src/cc_mcp/tools/academic_tools.py
 # 描述: Academic MCP 工具定义
 #
 # 上游依赖: academic/scholar/
