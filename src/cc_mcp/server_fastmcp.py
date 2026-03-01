@@ -268,8 +268,8 @@ if ENABLE_VISION:
             from dotenv import load_dotenv
 
             load_dotenv()
-            GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-            api_key = GEMINI_API_KEY  # 从环境变量获取 API Key
+            ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY")
+            api_key = ZHIPU_API_KEY  # 从环境变量获取 API Key
 
             _vision_client = OpenAI(
                 api_key=api_key,
