@@ -267,7 +267,10 @@ if ENABLE_VISION:
             from openai import OpenAI
             from dotenv import load_dotenv
 
-            load_dotenv()
+            # 指定.env文件路径（从项目根目录加载）
+            env_path = Path(__file__).parent.parent.parent / ".env"
+            load_dotenv(env_path)
+
             ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY")
             api_key = ZHIPU_API_KEY  # 从环境变量获取 API Key
 
