@@ -5,7 +5,7 @@ import socket
 socket.setdefaulttimeout(10)  # 全局超时10秒
 
 # 服务器配置 - 可以使用IP地址格式，如 http://192.168.1.100:9001/mcp
-MCP_URL = "http://127.0.0.1:9001/mcp"  # 默认使用localhost，可改为IP地址
+MCP_URL = "http://127.0.0.1:8000/mcp"  # 默认使用localhost，可改为IP地址
 
 def test_list_tools() -> str:
     print("=== 1. List Tools ===")

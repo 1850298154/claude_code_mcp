@@ -557,4 +557,5 @@ if __name__ == "__main__":
     banner = _get_banner_text()
     sys.stderr.write(banner)
     sys.stderr.flush()
-    mcp.run(transport="streamable-http")
+    # 使用SSE模式，建立持久连接，不需要session管理
+    mcp.run(transport="sse")
