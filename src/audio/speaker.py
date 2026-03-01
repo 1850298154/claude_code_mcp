@@ -33,6 +33,7 @@ class Speaker:
         """
         self._config = config or AudioConfig()
         self._engine = None
+        self._play_lock = threading.Lock()  # 播放锁，防止并发调用 runAndWait
         self._init_engine()
 
     def _init_engine(self):
@@ -58,15 +59,16 @@ class Speaker:
             return False
 
         try:
-            self._engine.say(text)
-            self._engine.runAndWait()
+            with self._play_lock:  # 使用锁保护
+                self._engine.say(text)
+                self._engine.runAndWait()
             return True
         except Exception as e:
             print(f"播放失败: {e}", flush=True)
             return False
 
     def speak_async(self, text: str) -> bool:
-        """异步播放语音
+        """异步播放语音（带锁保护，防止并发冲突）
 
         Args:
             text: 要播放的文本
@@ -79,9 +81,9 @@ class Speaker:
             return False
 
         try:
-            # 在新线程中运行同步播放
+            # 在新线程中运行同步播放（使用锁保护）
             thread = threading.Thread(target=self._run_in_thread, args=(text,))
-            thread.daemon = True
+            thread.daemon = False  # 非守护线程，确保播放完成
             thread.start()
             return True
         except Exception as e:
@@ -91,8 +93,9 @@ class Speaker:
     def _run_in_thread(self, text: str):
         """在线程中运行语音播放"""
         try:
-            self._engine.say(text)
-            self._engine.runAndWait()
+            with self._play_lock:  # 使用锁保护 runAndWait 调用
+                self._engine.say(text)
+                self._engine.runAndWait()
         except Exception as e:
             print(f"线程播放失败: {e}", flush=True)
 
