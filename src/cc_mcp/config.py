@@ -18,18 +18,17 @@ HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", 8000))
 
 
-# 模块启用/禁用配置 (默认全部启用)
+def _parse_bool(value: str) -> bool:
+    """解析布尔值"""
+    return value.lower() in ("true", "1", "yes", "on")
+
+
+# 模块启用/禁用配置
 ENABLE_CLAUDE_META = _parse_bool(os.getenv("ENABLE_CLAUDE_META", "true"))
 ENABLE_ACADEMIC = _parse_bool(os.getenv("ENABLE_ACADEMIC", "true"))
 ENABLE_VISION = _parse_bool(os.getenv("ENABLE_VISION", "false"))  # 默认关闭
 ENABLE_GRAPHRAG = _parse_bool(os.getenv("ENABLE_GRAPHRAG", "false"))  # 默认关闭
-ENABLE_UTILS = _parse_bool(os.getenv("ENABLE_UTILS", "true"))
 ENABLE_AUDIO = _parse_bool(os.getenv("ENABLE_AUDIO", "false"))  # 默认关闭
-
-
-def _parse_bool(value: str) -> bool:
-    """解析布尔值"""
-    return value.lower() in ("true", "1", "yes", "on")
 
 
 __all__ = [
@@ -38,6 +37,5 @@ __all__ = [
     "ENABLE_ACADEMIC",
     "ENABLE_VISION",
     "ENABLE_GRAPHRAG",
-    "ENABLE_UTILS",
     "ENABLE_AUDIO",
 ]

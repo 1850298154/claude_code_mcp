@@ -15,7 +15,6 @@ Claude Code MCP Server - 使用官方 FastMCP 实现
   - ENABLE_ACADEMIC: 是否启用 Academic 工具 (默认: true)
   - ENABLE_VISION: 是否启用 Vision 工具 (默认: false)
   - ENABLE_GRAPHRAG: 是否启用 GraphRAG 工具 (默认: false)
-  - ENABLE_UTILS: 是否启用 Utils 工具 (默认: true)
   - ENABLE_AUDIO: 是否启用 Audio 工具 (默认: false)
 
 客户端配置:
@@ -29,7 +28,6 @@ from .config import (
     ENABLE_ACADEMIC,
     ENABLE_VISION,
     ENABLE_GRAPHRAG,
-    ENABLE_UTILS,
     ENABLE_AUDIO,
 )
 
@@ -422,141 +420,6 @@ if ENABLE_GRAPHRAG:
 
 
 # ============================================================================
-# Utils - File 工具
-# ============================================================================
-
-if ENABLE_UTILS:
-    @mcp.tool()
-    def file_read(file_path: str) -> str:
-        """
-        读取文件内容
-
-        Args:
-            file_path: 文件路径
-
-        返回文件内容。
-        """
-        from utils.file_ops import FileOps
-        from json import dumps
-        content = FileOps.read(file_path)
-        return dumps({"content": content}, ensure_ascii=False)
-
-    @mcp.tool()
-    def file_write(file_path: str, content: str) -> str:
-        """
-        写入文件内容
-
-        Args:
-            file_path: 文件路径
-            content: 要写入的内容
-
-        返回写入结果。
-        """
-        from utils.file_ops import FileOps
-        from json import dumps
-        FileOps.write(file_path, content)
-        return dumps({"written": file_path}, ensure_ascii=False)
-
-    @mcp.tool()
-    def file_list_dir(directory: str, recursive: bool = False) -> str:
-        """
-        列出目录内容
-
-        Args:
-            directory: 目录路径
-            recursive: 是否递归列出子目录
-
-        返回目录内容列表。
-        """
-        from utils.file_ops import FileOps
-        from json import dumps
-        items = FileOps.list_dir(directory, recursive)
-        return dumps({"items": items}, ensure_ascii=False, indent=2)
-
-    @mcp.tool()
-    def file_find(directory: str, pattern: str = "*", recursive: bool = True) -> str:
-        """
-        查找文件
-
-        Args:
-            directory: 搜索目录
-            pattern: 文件匹配模式 (如 "*.py")
-            recursive: 是否递归搜索
-
-        返回匹配的文件列表。
-        """
-        from utils.file_ops import FileOps
-        from json import dumps
-        files = FileOps.find_files(directory, pattern, recursive)
-        return dumps({"files": files}, ensure_ascii=False)
-
-    @mcp.tool()
-    def string_truncate(text: str, max_length: int = 100, ellipsis: str = "...") -> str:
-        """
-        截断字符串
-
-        Args:
-            text: 原始文本
-            max_length: 最大长度
-            ellipsis: 省略符号
-
-        返回截断后的文本。
-        """
-        from utils.string_ops import StringOps
-        from json import dumps
-        truncated = StringOps.truncate(text, max_length, ellipsis)
-        return dumps({"truncated": truncated}, ensure_ascii=False)
-
-    @mcp.tool()
-    def string_format(text: str, style: str) -> str:
-        """
-        格式化字符串
-
-        Args:
-            text: 原始文本
-            style: 格式化风格 (如 "upper", "lower", "title", "snake", "camel")
-
-        返回格式化后的文本。
-        """
-        from utils.string_ops import StringOps
-        from json import dumps
-        formatted = StringOps.format(text, style)
-        return dumps({"formatted": formatted}, ensure_ascii=False)
-
-    @mcp.tool()
-    def json_read(file_path: str) -> str:
-        """
-        读取 JSON 文件
-
-        Args:
-            file_path: JSON 文件路径
-
-        返回解析后的数据。
-        """
-        from utils.json_ops import JsonOps
-        from json import dumps
-        data = JsonOps.read(file_path)
-        return dumps({"data": data}, ensure_ascii=False, indent=2)
-
-    @mcp.tool()
-    def json_write(file_path: str, data: str) -> str:
-        """
-        写入 JSON 文件
-
-        Args:
-            file_path: JSON 文件路径
-            data: JSON 数据字符串
-
-        返回写入结果。
-        """
-        from utils.json_ops import JsonOps
-        from json import dumps, loads
-        parsed_data = loads(data)
-        JsonOps.write(file_path, parsed_data)
-        return dumps({"written": file_path}, ensure_ascii=False)
-
-
-# ============================================================================
 # Audio 工具
 # ============================================================================
 
@@ -607,8 +470,6 @@ def _get_enabled_modules():
         enabled.append("Vision")
     if ENABLE_GRAPHRAG:
         enabled.append("GraphRAG")
-    if ENABLE_UTILS:
-        enabled.append("Utils")
     if ENABLE_AUDIO:
         enabled.append("Audio")
     return enabled
