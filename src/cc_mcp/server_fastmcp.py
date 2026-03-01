@@ -61,11 +61,7 @@ ACADEMIC_RESOURCES = [
 ]
 
 VISION_RESOURCES = [
-    "analyze_image - 分析图片内容",
-    "detect_objects - 检测图片中的对象",
-    "extract_text - 提取图片中的文本 (OCR)",
-    "describe_scene - 描述图片场景",
-    "compare_images - 比较两张图片",
+    "analyze_image - 图片分析（支持多图、OCR、对象检测、场景描述、图片比较）",
 ]
 
 GRAPHRAG_RESOURCES = [
@@ -259,92 +255,93 @@ if ENABLE_ACADEMIC:
 # ============================================================================
 
 if ENABLE_VISION:
-    _vision_analyzer = None
+    _vision_client = None
 
-    def _get_vision_analyzer():
-        """延迟初始化 VisionAnalyzer"""
-        global _vision_analyzer
-        if _vision_analyzer is None:
-            from vision.analyzer_class import VisionAnalyzer
-            _vision_analyzer = VisionAnalyzer(model="glm4v", api_key=None)
-        return _vision_analyzer
+    def _get_vision_client():
+        """延迟初始化 Vision Client"""
+        global _vision_client
+        if _vision_client is None:
+            import base64
+            from pathlib import Path
+            from openai import OpenAI
+            from dotenv import load_dotenv
 
-    @mcp.tool()
-    def analyze_image(image_path: str, prompt: str = "") -> str:
-        """
-        分析图片内容
+            load_dotenv()
+            api_key = None  # 从环境变量获取或设为None
 
-        Args:
-            image_path: 图片文件路径
-            prompt: 分析提示 (可选)
+            _vision_client = OpenAI(
+                api_key=api_key,
+                base_url="https://open.bigmodel.cn/api/paas/v4/"
+            )
+        return _vision_client
 
-        返回图片的详细描述。
-        """
-        from json import dumps
-        analyzer = _get_vision_analyzer()
-        description = analyzer.analyze_image(image_path, prompt)
-        return dumps({"description": description}, ensure_ascii=False)
+    def _encode_image(image_path: str) -> str:
+        """将图片编码为base64字符串"""
+        import base64
+        from pathlib import Path
 
-    @mcp.tool()
-    def detect_objects(image_path: str) -> str:
-        """
-        检测图片中的对象
+        img_path = Path(image_path)
+        if not img_path.exists():
+            raise FileNotFoundError(f"Image not found: {image_path}")
 
-        Args:
-            image_path: 图片文件路径
-
-        返回检测到的对象列表。
-        """
-        from json import dumps
-        analyzer = _get_vision_analyzer()
-        objects = analyzer.detect_objects(image_path)
-        return dumps({"objects": objects}, ensure_ascii=False, indent=2)
+        with open(image_path, "rb") as f:
+            return base64.b64encode(f.read()).decode('utf-8')
 
     @mcp.tool()
-    def extract_text(image_path: str) -> str:
+    def analyze_image(image_paths: list[str], prompt: str = "请详细描述这张图片的内容") -> str:
         """
-        提取图片中的文本 (OCR)
+        分析图片内容 - 最牛的图片分析工具
+
+        支持单张或多张图片分析，通过prompt控制分析类型：
+        - 提取文字: prompt="请提取图片中的所有文字内容"
+        - 检测对象: prompt="请检测并列出图片中的所有物体"
+        - 描述场景: prompt="请描述这张图片的场景"
+        - 比较图片: prompt="请比较这两张图片的区别"
+        - 自定义分析: 任何你想要的分析指令
 
         Args:
-            image_path: 图片文件路径
+            image_paths: 图片文件路径列表（支持一张或多张）
+            prompt: 分析提示词，默认为"请详细描述这张图片的内容"
 
-        返回提取的文本内容。
+        Returns:
+            分析结果
         """
         from json import dumps
-        analyzer = _get_vision_analyzer()
-        text = analyzer.extract_text(image_path)
-        return dumps({"text": text}, ensure_ascii=False)
 
-    @mcp.tool()
-    def describe_scene(image_path: str) -> str:
-        """
-        描述图片场景
+        try:
+            client = _get_vision_client()
 
-        Args:
-            image_path: 图片文件路径
+            # 构建消息内容
+            content = [{"type": "text", "text": prompt}]
 
-        返回对图片场景的自然语言描述。
-        """
-        from json import dumps
-        analyzer = _get_vision_analyzer()
-        description = analyzer.describe_scene(image_path)
-        return dumps({"description": description}, ensure_ascii=False)
+            # 添加所有图片
+            for img_path in image_paths:
+                img_base64 = _encode_image(img_path)
+                content.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{img_base64}"
+                    }
+                })
 
-    @mcp.tool()
-    def compare_images(image1_path: str, image2_path: str) -> str:
-        """
-        比较两张图片
+            # 调用API
+            response = client.chat.completions.create(
+                model="glm-4.6v",
+                messages=[{"role": "user", "content": content}],
+                temperature=0.7
+            )
 
-        Args:
-            image1_path: 第一张图片路径
-            image2_path: 第二张图片路径
+            result = response.choices[0].message.content
+            return dumps({
+                "success": True,
+                "result": result,
+                "images": len(image_paths)
+            }, ensure_ascii=False)
 
-        返回两张图片的对比结果。
-        """
-        from json import dumps
-        analyzer = _get_vision_analyzer()
-        comparison = analyzer.compare_images(image1_path, image2_path)
-        return dumps({"comparison": comparison}, ensure_ascii=False, indent=2)
+        except FileNotFoundError as e:
+            return dumps({"success": False, "error": str(e)}, ensure_ascii=False)
+        except Exception as e:
+            return dumps({"success": False, "error": str(e)}, ensure_ascii=False)
 
 
 # ============================================================================
