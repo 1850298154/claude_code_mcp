@@ -194,7 +194,7 @@ MCP (Model Context Protocol) 服务器，提供统一的工具接口。
 
 ```bash
 # 在项目根目录下执行
-python -m cc_mcp
+uv run python -m cc_mcp
 ```
 
 #### 配置选项
