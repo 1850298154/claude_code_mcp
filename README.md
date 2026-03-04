@@ -186,21 +186,58 @@ qa = QASystem(graph=graph)
 answer = qa.ask("这个项目的核心模块是什么？")
 ```
 
-### MCP (`src/mcp/`)
+### MCP (`src/cc_mcp/`)
 
 MCP (Model Context Protocol) 服务器，提供统一的工具接口。
 
-```python
-from mcp.server import MCPServer
-from mcp.tools import get_all_tools
+#### 启动服务器
 
-# 启动 MCP 服务器
-# uv run python -m mcp
-
-# 获取所有可用工具
-tools = get_all_tools()
-print(f"Available tools: {[tool.name for tool in tools]}")
+```bash
+# 在项目根目录下执行
+python -m cc_mcp
 ```
+
+#### 配置选项
+
+在项目根目录创建 `.env` 文件配置：
+
+```bash
+HOST=0.0.0.0              # 监听地址 (默认: 0.0.0.0)
+PORT=8000                 # 监听端口 (默认: 8000)
+ENABLE_CLAUDE_META=true   # 启用 Claude Meta 工具 (默认: true)
+ENABLE_ACADEMIC=true      # 启用 Academic 工具 (默认: true)
+ENABLE_VISION=false       # 启用 Vision 工具 (默认: false)
+ENABLE_GRAPHRAG=false     # 启用 GraphRAG 工具 (默认: false)
+ENABLE_AUDIO=false        # 启用 Audio 工具 (默认: false)
+```
+
+#### 可用工具
+
+- **Claude Meta**: `get_sessions`, `get_chat_history`, `get_memory`, `restore_session`, `get_project_context`
+- **Academic**: `search_papers`, `get_bibtex`, `get_abstract`, `verify_citations`
+- **Vision**: `analyze_image` (图片分析，支持多图、OCR、对象检测、场景描述、图片比较)
+- **GraphRAG**: `build_graph`, `add_entity`, `add_relation`, `query_graph`, `ask_question`
+- **Audio**: `speak` (文本转语音)
+
+#### 客户端配置
+
+在 Claude Code 的 `mcp.json` 中配置：
+
+```json
+{
+  "mcpServers": {
+    "claude-code-mcp": {
+      "type": "http",
+      "url": "http://localhost:8000/mcp"
+    }
+  }
+}
+```
+
+#### 端点说明
+
+- **HTTP 端点**: `http://0.0.0.0:8000/mcp`
+- **SSE 端点**: `http://0.0.0.0:8000/sse`
 
 ### Utils (`src/utils/`)
 
