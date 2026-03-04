@@ -197,6 +197,30 @@ MCP (Model Context Protocol) 服务器，提供统一的工具接口。
 uv run python -m cc_mcp
 ```
 
+#### 停止服务器
+
+如果需要停止服务器，可以使用以下方式：
+
+**方式一：Ctrl+C**
+```bash
+# 在服务器运行的终端按 Ctrl+C 停止
+```
+
+**方式二：查找并关闭进程**
+```bash
+# 查找占用端口的进程
+netstat -ano | grep ":8000"
+
+# 关闭进程 (替换 <PID> 为实际进程 ID)
+taskkill //F //PID <PID>
+```
+
+**方式三：按名称关闭**
+```bash
+# 关闭所有 Python 进程 (谨慎使用)
+taskkill //F //IM python.exe
+```
+
 #### 配置选项
 
 在项目根目录创建 `.env` 文件配置：
