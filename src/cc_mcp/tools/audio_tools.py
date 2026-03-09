@@ -2,7 +2,7 @@
 # 文件: src/cc_mcp/tools/audio_tools.py
 # 描述: Audio MCP 工具定义
 #
-# 上游依赖: audio/speaker/
+# 上游依赖: audio/speaker/, audio/listener/
 # 下游封装: cc_mcp/server.py
 #
 # Bash 快速定位:
@@ -31,6 +31,24 @@ AUDIO_TOOLS: list[Tool] = [
                 },
             },
             "required": ["text"],
+        },
+    ),
+    Tool(
+        name="listen_once",
+        description="单次录音并识别（语音转文字）",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "timeout": {
+                    "type": "number",
+                    "description": "等待语音开始的超时时间（秒），默认 5",
+                },
+                "phrase_time_limit": {
+                    "type": "number",
+                    "description": "单次录音的最长时间（秒），默认 10",
+                },
+            },
+            "required": [],
         },
     ),
 ]

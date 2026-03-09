@@ -47,4 +47,25 @@ class AudioConfig:
         self.volume = max(0, min(100, volume))
 
 
-__all__ = ["VoiceType", "VoiceSpeed", "AudioConfig"]
+class RecognizerBackend(str, Enum):
+    """语音识别后端"""
+
+    SPHINX = "sphinx"  # 本地离线识别 (pocketsphinx)
+    GOOGLE = "google"  # Google Web Speech API
+
+
+class ListenerState(str, Enum):
+    """监听器状态"""
+
+    IDLE = "idle"  # 空闲
+    LISTENING = "listening"  # 正在录音
+    PROCESSING = "processing"  # 正在识别
+
+
+__all__ = [
+    "VoiceType",
+    "VoiceSpeed",
+    "AudioConfig",
+    "RecognizerBackend",
+    "ListenerState",
+]

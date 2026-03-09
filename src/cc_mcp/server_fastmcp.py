@@ -75,6 +75,7 @@ GRAPHRAG_RESOURCES = [
 
 AUDIO_RESOURCES = [
     "speak - 文本转语音播报",
+    "listen_once - 单次录音并识别（语音转文字）",
 ]
 
 
@@ -467,14 +468,23 @@ if ENABLE_GRAPHRAG:
 
 if ENABLE_AUDIO:
     _speaker = None
+    _listener = None
 
     def _get_speaker():
         """延迟初始化 Speaker"""
         global _speaker
         if _speaker is None:
-            from src.audio.speaker import Speaker
+            from audio.speaker import Speaker
             _speaker = Speaker()
         return _speaker
+
+    def _get_listener():
+        """延迟初始化 Listener"""
+        global _listener
+        if _listener is None:
+            from audio.listener import Listener
+            _listener = Listener()
+        return _listener
 
     @mcp.tool()
     def speak(text: str, async_mode: bool = False) -> str:
@@ -487,7 +497,6 @@ if ENABLE_AUDIO:
 
         返回播放结果。
         """
-        from src.audio.speaker import Speaker
         from json import dumps
         speaker = _get_speaker()
         if async_mode:
@@ -495,6 +504,26 @@ if ENABLE_AUDIO:
         else:
             success = speaker.speak(text)
         return dumps({"played": success}, ensure_ascii=False)
+
+    @mcp.tool()
+    def listen_once(timeout: float = 5.0, phrase_time_limit: float = 10.0) -> str:
+        """
+        单次录音并识别（语音转文字）
+
+        Args:
+            timeout: 等待语音开始的超时时间（秒），默认 5
+            phrase_time_limit: 单次录音的最长时间（秒），默认 10
+
+        返回识别结果。
+        """
+        from json import dumps
+        listener = _get_listener()
+        result = listener.listen_once(timeout=timeout, phrase_time_limit=phrase_time_limit)
+        return dumps({
+            "success": result.success,
+            "text": result.text,
+            "error": result.error,
+        }, ensure_ascii=False)
 
 
 # ============================================================================
